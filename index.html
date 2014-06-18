@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <title>YNAB</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3">
+          <!--
+          <ul data-bind="foreach: budget.budgets">
+          	<li data-bind="click: $parent.budget.select, text: $data"></li>
+          </ul>
+          -->
+          <div class="panel panel-default">
+            <div class="panel-heading">Budget Accounts</div>
+            <div class="panel-body">
+              <ul class="nav nav-pills nav-stacked" data-bind="foreach: account.budgetAccounts">
+                <li data-bind="click: $parent.account.select, css: { active: $parent.account.selectedAccount() === $data }">
+                  <a href="#" data-bind="text: accountName"></a> 
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="panel-heading">Off-Budget Accounts</div>
+            <div class="panel-body">
+              <ul class="nav nav-pills nav-stacked" data-bind="foreach: account.offBudgetAccounts">
+                <li data-bind="click: $parent.account.select, css: { active: $parent.account.selectedAccount() === $data }">
+                  <a href="#" data-bind="text: accountName"></a> 
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-9">
+          <table class="table table-striped">
+          	<thead>
+          		<tr></tr>
+          	</thead>
+          	<tbody data-bind="foreach: transaction.filteredTransactions">
+          		<tr data-bind="click: function(){ console.log($data); }">
+                <td data-bind="text: $root.account.lookup($data.accountId).accountName"></td>
+          			<td data-bind="text: amount"></td>
+                <td data-bind="text: $root.categories.lookup($data.categoryId).name"></td>
+          			<td data-bind="text: $root.payee.lookup($data.payeeId).name"></td>
+          			<td data-bind="text: date"></td>
+          		</tr>
+          	</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-debug.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"></script>
+    <script src="client.js"></script>
+    <script src="app.js"></script>
+    <script>
+    var app;
+    $(function(){
+        app = new App({ key: "qrrtbcmepbyplpp"})
+        ko.applyBindings(app);  
+    })
+    </script>
+  </body>
+</html>
