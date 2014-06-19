@@ -3,57 +3,65 @@
   <head>
     <title>YNAB</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
-        <div class="col-md-3">
-          <!--
-          <ul data-bind="foreach: budget.budgets">
-          	<li data-bind="click: $parent.budget.select, text: $data"></li>
-          </ul>
-          -->
+        <div class="col-sm-4">
           <div class="panel panel-default">
             <div class="panel-heading">Budget Accounts</div>
             <div class="panel-body">
-              <ul class="nav nav-pills nav-stacked" data-bind="foreach: account.budgetAccounts">
-                <li data-bind="click: $parent.account.select, css: { active: $parent.account.selectedAccount() === $data }">
-                  <a href="#" data-bind="text: accountName"></a> 
-                </li>
-              </ul>
+              <div data-bind="template: { name: 'account-list-template', data: account.budgetAccounts }"></div>
             </div>
           </div>
 
           <div class="panel panel-default">
             <div class="panel-heading">Off-Budget Accounts</div>
             <div class="panel-body">
-              <ul class="nav nav-pills nav-stacked" data-bind="foreach: account.offBudgetAccounts">
-                <li data-bind="click: $parent.account.select, css: { active: $parent.account.selectedAccount() === $data }">
-                  <a href="#" data-bind="text: accountName"></a> 
-                </li>
-              </ul>
+              <div data-bind="template: { name: 'account-list-template', data: account.offBudgetAccounts }"></div>
             </div>
           </div>
+
+          <p class="text-muted text-center">haochi made it!</p>
         </div>
 
-        <div class="col-md-9">
-          <table class="table table-striped">
-          	<thead>
-          		<tr></tr>
-          	</thead>
-          	<tbody data-bind="foreach: transaction.filteredTransactions">
-          		<tr data-bind="click: function(){ console.log($data); }">
+        <div class="col-sm-8">
+          <table class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <td>Account</td>  
+                <td>Date</td>  
+                <td>Payee</td>  
+                <td>Category</td>  
+                <td>Memo</td>  
+                <td>Amount</td>  
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: transaction.filteredTransactions">
+              <tr data-bind="click: function(){ console.log($data); }">
                 <td data-bind="text: $root.account.lookup($data.accountId).accountName"></td>
-          			<td data-bind="text: amount"></td>
-                <td data-bind="text: $root.categories.lookup($data.categoryId).name"></td>
-          			<td data-bind="text: $root.payee.lookup($data.payeeId).name"></td>
-          			<td data-bind="text: date"></td>
-          		</tr>
-          	</tbody>
+                <td data-bind="text: date"></td>
+                <td data-bind="text: $root.payee.lookup($data.payeeId).name"></td>
+                <td data-bind="text: $root.category.lookup($data.categoryId).name"></td>
+                <td data-bind="text: $data.memo"></td>
+                <td data-bind="text: amount" class="text-right"></td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
+    <script type="text/html" id="account-list-template">
+      <ul class="nav nav-pills nav-stacked" data-bind="foreach: $data">
+        <li data-bind="click: $root.account.select, css: { active: $root.account.selectedAccount() === $data }">
+          <a href="#">
+            <span class="badge pull-right" data-bind="text: $root.accountBalance($data.entityId).toFixed(2), css: $root.accountBalance($data.entityId) < 0 ? 'alert-danger' : 'alert-success'"></span>
+            <span data-bind="text: accountName"></span>
+          </a> 
+        </li>
+      </ul>
+    </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-debug.js"></script>
