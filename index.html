@@ -77,10 +77,12 @@
     <script src="app.js"></script>
     <script>
     var app;
-    $(function(){
-        app = new App({ key: "qrrtbcmepbyplpp"})
-        ko.applyBindings(app);  
-    })
+    if(location.protocol === "https:" || location.hostname === "localhost") {
+      app = new App({ key: "qrrtbcmepbyplpp"});
+      ko.applyBindings(app);      
+    } else {
+      location.href = location.href.replace(/^http:/i, "https:");
+    }
     </script>
   </body>
 </html>
