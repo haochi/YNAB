@@ -48,6 +48,17 @@ function Account(settings){
   self.accounts = ko.observableArray();
   self.selectedAccount = ko.observable()
 
+  self.showBudgetAccounts = ko.observable(true);
+  self.showOffBudgetAccounts = ko.observable(true);
+
+  self.toggleBudgetAccounts = function(){
+    self.showBudgetAccounts(!self.showBudgetAccounts());
+  }
+
+  self.toggleOffBudgetAccounts = function(){
+    self.showOffBudgetAccounts(!self.showOffBudgetAccounts());
+  }
+
   var lookup = ko.computed(function(){
     return _.indexBy(self.accounts(), 'entityId')
   })
