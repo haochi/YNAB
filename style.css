@@ -1,12 +1,40 @@
 body {
     margin-top: 10px;
+    font-size: 13px;
 }
 
 .nav > li > a {
 	padding: 5px;
 }
 
-.toggle-account-list {
+.panel {
+    margin-bottom: 10px;
+}
+.panel-heading {
+    padding: 5px 10px;
+}
+.panel-body {
+    padding: 5px;
+}
+
+.transaction-date, .transaction-amount {
+    width: 80px;
+}
+
+.filters li {
+    display: inline;
+}
+
+.filters .label {
+    font-size: 80%;
+    border-radius: 0;
+}
+
+.filter-remove {
+    margin-left: 0px;
+}
+
+.toggle-account-list, .transactions table thead td {
     cursor: pointer;
 }
 

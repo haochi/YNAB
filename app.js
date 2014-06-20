@@ -3,11 +3,11 @@ function App(settings){
   var client = self.client = new Client(settings);
   var rootFile = ".ynabSettings.yroot";
   var appSettings = { client: client, app: self };
-  self.budget = new Budget(appSettings);
-  self.account = new Account(appSettings);
-  self.payee = new Payee(appSettings)
-  self.category = new Category(appSettings);
-  self.transaction = new Transaction(appSettings)
+  self.budget = new BudgetController(appSettings);
+  self.account = new AccountController(appSettings);
+  self.payee = new PayeeController(appSettings)
+  self.category = new CategoryController(appSettings);
+  self.transaction = new TransactionController(appSettings)
 
   var accountBalance = ko.computed(function(){
     var transactionsByAccountId = _.chain(self.transaction.transactions()).groupBy("accountId");
@@ -18,6 +18,12 @@ function App(settings){
       }, 0);
       return memo;
     }, {}).value()
+  })
+
+  self.netWorth = ko.computed(function() {
+    return _.reduce(self.transaction.transactions(), function(sum, transaction){
+      return sum + transaction.amount;
+    }, 0);
   })
 
   self.accountBalance = function(accountId){
@@ -42,47 +48,63 @@ function App(settings){
   }
 }
 
-function Account(settings){
+function AccountList(settings) {
+  var self = this;
+  self.accounts = settings.accounts;
+  self.title = settings.title;
+  self.show = ko.observable(settings.show);
+  self.toggle = function(){
+    self.show(!self.show());
+  }
+}
+
+function AccountController(settings){
   var self = this;
 
   self.accounts = ko.observableArray();
   self.selectedAccount = ko.observable()
 
-  self.showBudgetAccounts = ko.observable(true);
-  self.showOffBudgetAccounts = ko.observable(true);
-
-  self.toggleBudgetAccounts = function(){
-    self.showBudgetAccounts(!self.showBudgetAccounts());
-  }
-
-  self.toggleOffBudgetAccounts = function(){
-    self.showOffBudgetAccounts(!self.showOffBudgetAccounts());
-  }
-
   var lookup = ko.computed(function(){
     return _.indexBy(self.accounts(), 'entityId')
+  })
+
+  var budgetAccounts = ko.computed(function(){
+    return _.filter(self.accounts(), function(account){
+      return account.onBudget;
+    });
+  })
+
+  var offBudgetAccounts = ko.computed(function(){
+    return _.difference(self.accounts(), budgetAccounts());
+  })
+
+  self.budgetAccounts = new AccountList({
+    accounts: budgetAccounts,
+    show: true,
+    title: 'Budget Accounts'
+  })
+
+  self.offBudgetAccounts = new AccountList({
+    accounts: offBudgetAccounts,
+    show: false,
+    title: 'Off Budget Accounts'
   })
 
   self.lookup = function(id) {
     return lookup()[id] || {};
   }
 
-  self.budgetAccounts = ko.computed(function(){
-    return _.filter(self.accounts(), function(account){
-      return account.onBudget;
-    });
-  })
-
-  self.offBudgetAccounts = ko.computed(function(){
-    return _.difference(self.accounts(), self.budgetAccounts());
-  })
-
   self.select = function(account){
     self.selectedAccount(account)
+    settings.app.transaction.removeFilters();
+  }
+
+  self.selectAllAccount = function(){
+    self.selectedAccount(null);
   }
 }
 
-function Payee(settings){
+function PayeeController(settings){
   var self = this;
   self.payees = ko.observableArray();
 
@@ -95,7 +117,7 @@ function Payee(settings){
   }
 }
 
-function Category(settings) {
+function CategoryController(settings) {
   var self = this;
   self.categories = ko.observableArray();
 
@@ -103,8 +125,12 @@ function Category(settings) {
     return _.indexBy(self.categories(), 'entityId')
   })
 
+  var specialLookup = {
+    "Category/__ImmediateIncome__": { name: "Income" }
+  }
+
   self.lookup = function(id) {
-    return lookup()[id] || {};
+    return lookup()[id] || specialLookup[id] || {};
   }
 }
 
@@ -113,23 +139,106 @@ function MonthlyBudget(settings){
   self.monthlyBudgets = ko.observableArray();
 }
 
-function Transaction(settings){
+function TransactionController(settings){
   var self = this;
   self.transactions = ko.observableArray();
 
+  self.sortBy = ko.observable();
+  self.desc = ko.observable(true);
+
+  self.sort = function(column) {
+    return function() {
+      self.desc(!self.desc());
+      self.sortBy(column);
+    }
+  }
+
+  var filters = {
+    "account": new Filter("Account", "account", function(transaction) { 
+      return transaction.accountName;
+    }, function(transaction, on) {
+      return transaction.accountId === on.accountId;
+    }),
+    "date": new Filter("Date", "date", function(transaction) { 
+      return transaction.date;
+    }, function(transaction, on) {
+      return transaction.date === on.date;
+    }),
+    "payee": new Filter("Payee", "payee", function(t) {
+      return t.payeeName;
+    }, function(t, on) {
+      return t.payeeId === on.payeeId;
+    }),
+    "category": new Filter("Category", "category", function(t) {
+      return t.categoryName;
+    }, function(t, on) {
+      return t.categoryId === on.categoryId;
+    })
+  }
+
+  var filtersObject = ko.observable({});
+
+  self.addFilter = function(name, transaction){
+    return function() {
+      var filtersObjectTemp = filtersObject();
+      var filter = filtersObjectTemp[name] = filters[name];
+      filter.on = transaction;
+      filtersObject(filtersObjectTemp);
+    }
+  }
+
+  self.removeFilter = function(name) {
+    return function() {
+      var filtersObjectTemp = filtersObject();
+      delete filtersObjectTemp[name];
+      filtersObject(filtersObjectTemp);
+    }
+  }
+
+  self.removeFilters = function(){
+    filtersObject({});
+  }
+
+  self.filters = ko.computed(function(){
+    return _.values(filtersObject());
+  })
+
   self.filteredTransactions = ko.computed(function(){
+    var sort = self.sortBy();
+    var desc = self.desc();
+    var filters = self.filters();
     var account = settings.app.account.selectedAccount();
+    var transactions = _.chain(self.transactions()).map(function(transaction){
+      return new Transaction(settings.app, transaction);
+    });
+
     if(account){
-      return self.transactions().filter(function(transaction){
+      transactions = transactions.filter(function(transaction){
         return transaction.accountId === account.entityId;
       })
-    }else{
-      return self.transactions();
     }
+
+    filters.forEach(function(filter){
+      transactions = transactions.filter(function(transaction){
+        return filter.predicate(transaction, filter.on);
+      })
+    })
+
+    if(sort) {
+      transactions = transactions.sortBy(function(transaction){
+        return transaction[sort];
+      })
+
+      if(desc) {
+        transactions = transactions.reverse();
+      }
+    }
+
+    return transactions.value();
   })
 }
 
-function Budget(settings){
+function BudgetController(settings){
   var self = this;
   var budgetMetaFile = "Budget.ymeta";
   var client = settings.client;
@@ -189,8 +298,8 @@ function Budget(settings){
             }
           }, function(err){
             client.loadJson(self.fullBudgetFile()).then(function(budget){
-              var categories = _.chain(budget.masterCategories).map(function(masterCategories){
-                return masterCategories.subCategories;
+              var categories = _.chain(budget.masterCategories).map(function(masterCategory){
+                return masterCategory.subCategories;
               }).flatten().filter(function(c) { return c; }).value();
 
               app.payee.payees(budget.payees)
@@ -200,7 +309,9 @@ function Budget(settings){
                 return a.sortableIndex - b.sortableIndex;
               }))
 
-              app.transaction.transactions(budget.transactions.sort(function(a, b) {
+              app.transaction.transactions(budget.transactions.filter(function(transaction){
+                return !transaction.isTombstone;
+              }).sort(function(a, b) {
                 return a.date.localeCompare(b.date);
               }))
             })
@@ -209,4 +320,33 @@ function Budget(settings){
       })
     })
   }
+}
+
+function Transaction(app, transaction) {
+  var self = this;
+  self.accountId = transaction.accountId;
+  self.accountName = app.account.lookup(transaction.accountId).accountName;
+  self.categoryName = app.category.lookup(transaction.categoryId).name;
+  self.categoryId = transaction.categoryId;
+  self.payeeId = transaction.payeeId;
+  self.payeeName = app.payee.lookup(transaction.payeeId).name;
+  self.date = transaction.date;
+  self.memo = transaction.memo;
+  self.amount = transaction.amount;
+  self.subTransactions = (transaction.subTransactions || []).map(function(subTransaction){
+    return {
+      categoryName: app.category.lookup(subTransaction.categoryId).name,
+      categoryId: subTransaction.categoryId
+    };
+  })
+
+  self.baseObject = transaction;
+}
+
+function Filter(name, id, value, predicate) {
+  var self = this;
+  self.name = name;
+  self.value = value;
+  self.id = id;
+  self.predicate = predicate;
 }
