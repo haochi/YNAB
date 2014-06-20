@@ -248,6 +248,8 @@ function BudgetController(settings){
   self.budget = ko.observable();
   self.budgetDataFolder = ko.observable()
   self.device = ko.observable();
+  self.loadingProgress = ko.observable(0);
+  self.loadingMessages = ko.observableArray();
 
   self.budgetName = ko.computed(function(){
     return ((self.budget() || "").split("/")[1] || "").split("~")[0];
@@ -277,14 +279,23 @@ function BudgetController(settings){
     return [self.fullBudgetPath(), "Budget.yfull"].join("/");
   })
 
+  self.loading = function(percent, message) {
+    self.loadingProgress(percent);
+    self.loadingMessages.unshift(message);
+  }
+
   self.select = function(budget){
     self.budget(budget);
     self.device(null);
 
+    self.loading(10, "Looking up where the YNAB data folder is ...");
     client.loadJson(self.budgetMetaPath()).then(function(data){
+      self.loading(20, "Reading the YNAB data folder ...");
       self.budgetDataFolder(data.relativeDataFolderName);
       client.readDir(self.budgetDataPath()).then(function(){
+        self.loading(40, "");
         client.readDir(self.budgetDevicesPath()).then(function(deviceFiles){
+          self.loading(60, "Figuring out which device has the latest version ...");
           async.eachLimit(deviceFiles, 1, function(deviceFile, callback){
             if(self.device()) {
               callback()
@@ -297,7 +308,9 @@ function BudgetController(settings){
               })
             }
           }, function(err){
+            self.loading(90, "Downloading the latest version of the data ...");
             client.loadJson(self.fullBudgetFile()).then(function(budget){
+              self.loading(100);
               var categories = _.chain(budget.masterCategories).map(function(masterCategory){
                 return masterCategory.subCategories;
               }).flatten().filter(function(c) { return c; }).value();

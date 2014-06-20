@@ -7,7 +7,15 @@
   </head>
   <body>
     <div class="container-fluid">
-      <div class="row">
+      <div data-bind="visible: budget.loadingProgress() !== 100">
+        <div class="progress">
+          <div class="progress-bar progress-bar-success" data-bind="style: { width: budget.loadingProgress() + '%' }"></div>
+        </div>
+        <div class="text-center" data-bind="foreach: budget.loadingMessages">
+          <p data-bind="text: $data"></p>
+        </div>
+      </div>
+      <div class="row" data-bind="visible: budget.loadingProgress() === 100">
         <div class="col-sm-3 accounts">
           <div class="list-group">
             <a href="#" class="list-group-item" data-bind="click: account.selectAllAccount, css: { active: !account.selectedAccount() }">
@@ -21,7 +29,7 @@
           <p class="text-muted text-center">
             <a href="http://ihaochi.com">haochi</a> made this &middot;
             find it on <a href="https://github.com/haochi/YNAB">github</a> <br />
-            disclaimer: YNAB is a trademark of Steine LLC and this project has no affiliation to YNAB or Steine LLC
+            disclaimer: YNAB is a trademark of Steine LLC and this project has no affiliation to YNAB or Steine LLC <br/>
           </p>
         </div>
 
