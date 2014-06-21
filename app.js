@@ -31,12 +31,6 @@ function App(settings){
     return accountBalance()[accountId] || 0;
   }
 
-  self.signOut = function() {
-    client.dropbox.signOut({}, function(){
-      location.href = "/signout.html"
-    })
-  }
-
   client.authenticate().then(function(){
     client.loadJson(rootFile).then(function(root){
       self.budget.budgets(root.relativeKnownBudgets);
