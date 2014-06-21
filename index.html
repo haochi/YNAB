@@ -119,21 +119,23 @@
         </div>
       </div>
     </script>
-    <script src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js" type="text/javascript"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-debug.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/numeral.js/1.5.3/numeral.min.js"></script>
+    <script>
+      var securedPage = location.protocol === "https:" || location.hostname === "localhost";
+      if(!securedPage) location.href = location.href.replace(/^http:/i, "https:");;
+    </script>
+    <script src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-debug.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.5.3/numeral.min.js"></script>
     <script src="client.js"></script>
     <script src="app.js"></script>
     <script>
     var app;
-    if(location.protocol === "https:" || location.hostname === "localhost") {
+    if(securedPage) {
       app = new App({ key: "qrrtbcmepbyplpp"});
       ko.applyBindings(app);      
-    } else {
-      location.href = location.href.replace(/^http:/i, "https:");
     }
     </script>
   </body>
