@@ -12,6 +12,11 @@
   </head>
   <body>
     <div class="container-fluid">
+      <noscript>
+        <div class="alert alert-danger text-center">
+          <strong>Please enable JavaScript to use this application.</strong>
+        </div>
+      </noscript>
       <div class="alert alert-danger text-center" data-bind="visible: errorMessage, text: errorMessage"></div>
       <div data-bind="visible: budget.loadingProgress() !== 100">
         <div class="progress">
