@@ -3,6 +3,10 @@ body {
     font-family: "Source Sans Pro", sans-serif;
 }
 
+.home-page {
+    max-width: 800px;
+}
+
 .nav > li > a {
 	padding: 5px;
 }
