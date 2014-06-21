@@ -31,7 +31,7 @@
         <div class="col-sm-3 accounts">
           <div class="list-group">
             <a href="#" class="list-group-item" data-bind="click: account.selectAllAccount, css: { active: !account.selectedAccount() }">
-              <span class="badge" data-bind="text: numeral(netWorth()).format('0.00')"></span>
+              <span class="badge" data-bind="text: numeral(netWorth()).format($root.numberFormat)"></span>
               All Accounts
             </a>
           </div>
@@ -110,7 +110,7 @@
                   </ul>
                 </td>
                 <td data-bind="text: memo"></td>
-                <td data-bind="text: numeral(amount).format('0.00')" class="text-right"></td>
+                <td data-bind="text: numeral(amount).format($root.numberFormat)" class="text-right"></td>
               </tr>
             </tbody>
           </table>
@@ -127,7 +127,7 @@
           <ul class="nav nav-pills nav-stacked" data-bind="foreach: accounts">
             <li data-bind="click: $root.account.select, css: { active: $root.account.selectedAccount() === $data }">
               <a href="#">
-                <span class="badge pull-right" data-bind="text: numeral($root.accountBalance($data.entityId)).format('0.00'), css: $root.accountBalance($data.entityId) < 0 ? 'alert-danger' : 'alert-success'"></span>
+                <span class="badge pull-right" data-bind="text: numeral($root.accountBalance($data.entityId)).format($root.numberFormat), css: $root.accountBalance($data.entityId) < 0 ? 'alert-danger' : 'alert-success'"></span>
                 <span data-bind="text: accountName"></span>
               </a> 
             </li>

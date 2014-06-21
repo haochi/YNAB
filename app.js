@@ -3,6 +3,7 @@ function App(settings){
   var client = self.client = new Client(settings);
   var rootFile = ".ynabSettings.yroot";
   var appSettings = { client: client, app: self };
+  self.numberFormat = '0,0.00';
   self.errorMessage = ko.observable();
   self.budget = new BudgetController(appSettings);
   self.account = new AccountController(appSettings);
