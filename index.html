@@ -2,11 +2,13 @@
 <html>
   <head>
     <title>YNAB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div class="container-fluid">
+      <div class="alert alert-danger text-center" data-bind="visible: errorMessage, text: errorMessage"></div>
       <div data-bind="visible: budget.loadingProgress() !== 100">
         <div class="progress">
           <div class="progress-bar progress-bar-success" data-bind="style: { width: budget.loadingProgress() + '%' }"></div>

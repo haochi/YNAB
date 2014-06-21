@@ -3,6 +3,7 @@ function App(settings){
   var client = self.client = new Client(settings);
   var rootFile = ".ynabSettings.yroot";
   var appSettings = { client: client, app: self };
+  self.errorMessage = ko.observable();
   self.budget = new BudgetController(appSettings);
   self.account = new AccountController(appSettings);
   self.payee = new PayeeController(appSettings)
@@ -36,6 +37,8 @@ function App(settings){
       if(self.budget.budgets().length === 1){
         self.budget.select(self.budget.budgets()[0])
       }
+    }).fail(function(){
+      self.errorMessage("Unable to load YNAB settings file (" + rootFile + "). Make sure you connect to a Dropbox account with that YNAB syncs with.");
     });
   });
 
@@ -250,6 +253,7 @@ function BudgetController(settings){
   self.device = ko.observable();
   self.loadingProgress = ko.observable(0);
   self.loadingMessages = ko.observableArray();
+  self.errorMessage = app.errorMessage;
 
   self.budgetName = ko.computed(function(){
     return ((self.budget() || "").split("/")[1] || "").split("~")[0];
@@ -300,37 +304,52 @@ function BudgetController(settings){
             if(self.device()) {
               callback()
             }else{
-              client.loadJson(self.deviceFilePath(deviceFile)).then(function(device){
+              var deviceFilePath = self.deviceFilePath(deviceFile);
+              client.loadJson(deviceFilePath).then(function(device){
                 if(device.hasFullKnowledge){
                   self.device(device);
                 }
                 callback();
+              }).fail(function(){
+                callback(true);
               })
             }
           }, function(err){
-            self.loading(90, "Downloading the latest version of the data ...");
-            client.loadJson(self.fullBudgetFile()).then(function(budget){
-              self.loading(100);
-              var categories = _.chain(budget.masterCategories).map(function(masterCategory){
-                return masterCategory.subCategories;
-              }).flatten().filter(function(c) { return c; }).value();
+            if(!err) {
+              self.loading(90, "Downloading the latest version of the data ...");
+              client.loadJson(self.fullBudgetFile()).then(function(budget){
+                self.loading(100);
+                var categories = _.chain(budget.masterCategories).map(function(masterCategory){
+                  return masterCategory.subCategories;
+                }).flatten().filter(function(c) { return c; }).value();
 
-              app.payee.payees(budget.payees)
-              app.category.categories(categories);
-              
-              app.account.accounts(budget.accounts.sort(function(a, b) {
-                return a.sortableIndex - b.sortableIndex;
-              }))
+                app.payee.payees(budget.payees)
+                app.category.categories(categories);
+                
+                app.account.accounts(budget.accounts.sort(function(a, b) {
+                  return a.sortableIndex - b.sortableIndex;
+                }))
 
-              app.transaction.transactions(budget.transactions.filter(function(transaction){
-                return !transaction.isTombstone;
-              }).sort(function(a, b) {
-                return a.date.localeCompare(b.date);
-              }))
-            })
+                app.transaction.transactions(budget.transactions.filter(function(transaction){
+                  return !transaction.isTombstone;
+                }).sort(function(a, b) {
+                  return a.date.localeCompare(b.date);
+                }))
+              }).fail(function(){
+                self.errorMessage("Error reading the budget file.")
+              })
+            } else {
+              self.errorMessage("Error figuring out which devices has the latest version")
+            }
           })
+        }).fail(function(){
+          self.errorMessage("Error reading " + self.budgetDevicesPath())
         })
+      }).fail(function(){
+        self.errorMessage("Error reading " + self.budgetDataPath())
       })
+    }).fail(function(){
+      self.errorMessage("Error loading " + self.budgetMetaPath())
     })
   }
 }
