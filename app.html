@@ -3,37 +3,152 @@
   <head>
     <title>YNAB</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      var securedPage = location.protocol === "https:" || location.hostname === "localhost";
+      if(!securedPage) location.href = location.href.replace(/^http:/i, "https:");;
+    </script>
     <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div class="container home-page">
-      <div class="jumbotron">
-        <h1>YNAB on the web</h1>
-        <p class="lead">
-          Ever wanted to check your YNAB data on the web? Look no further! With this application you can view and filter your transaction log if you have it synced with Dropbox.
-        </p>
-        <p><a class="btn btn-lg btn-success" href="app.html">Sign in with Dropbox</a></p>
-      </div>
-      <div class="row">
-        <div class="col-lg-6">
-          <h4>How does this work?</h4>
-          <p>If you are syncing your YNAB data with Dropbox, then by giving this application the permission to access your data on Dropbox, it can read the same data that the official YNAB application uses.</p>
+    <div class="container-fluid">
+      <noscript>
+        <div class="alert alert-danger text-center">
+          <strong>Please enable JavaScript to use this application.</strong>
         </div>
-        <div class="col-lg-6">
-          <h4>Is this safe?</h4>
-          <p>This app uses the <a href="https://www.dropbox.com/developers/datastore/sdks/js">Dropbox JavaScript SDK</a>, so all the communication happens in the browser, which means none of your data goes through this server.</p>
+      </noscript>
+      <div class="alert alert-danger text-center" data-bind="visible: errorMessage, text: errorMessage"></div>
+      <div data-bind="visible: budget.loadingProgress() !== 100">
+        <div class="progress">
+          <div class="progress-bar progress-bar-success" data-bind="style: { width: budget.loadingProgress() + '%' }"></div>
+        </div>
+        <div class="text-center" data-bind="foreach: budget.loadingMessages">
+          <p data-bind="text: $data"></p>
         </div>
       </div>
-      <div class="footer">
-        <hr />
-        <a href="http://ihaochi.com">haochi</a> made this &middot;
-        find it on <a href="https://github.com/haochi/YNAB">github</a> &middot;
-        doesn't work? let <a href="http://twitter.com/haochi">@haochi</a> know!
-        <br/>
-        disclaimer: YNAB is a trademark of Steine LLC and this project has no affiliation to YNAB or Steine LLC
+      <div class="row" data-bind="visible: budget.loadingProgress() === 100">
+        <div class="col-sm-3 accounts">
+          <div class="list-group">
+            <a href="#" class="list-group-item" data-bind="click: account.selectAllAccount, css: { active: !account.selectedAccount() }">
+              <span class="badge" data-bind="text: numeral(netWorth()).format('0.00')"></span>
+              All Accounts
+            </a>
+          </div>
+          <div data-bind="template: { name: 'account-list-template', data: account.budgetAccounts }"></div>
+          <div data-bind="template: { name: 'account-list-template', data: account.offBudgetAccounts }"></div>
+          
+          <div class="text-muted text-center">
+            <a href="http://ihaochi.com">haochi</a> made this &middot;
+            find it on <a href="https://github.com/haochi/YNAB">github</a> <br />
+            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top" class="form-line">
+              <input type="hidden" name="cmd" value="_s-xclick">
+              <input type="hidden" name="hosted_button_id" value="PEWUM7ZRKQ45W">
+              <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+              <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+            </form>
+            disclaimer: YNAB is a trademark of Steine LLC and this project has no affiliation to YNAB or Steine LLC <br/>
+          </div>
+        </div>
+
+        <div class="col-sm-9 col-sm-offset-3 transactions">
+          <ul data-bind="foreach: transaction.filters, visible: transaction.filters().length" class="list-unstyled filters">
+            <li class="filter" data-bind="click: $root.transaction.removeFilter($data.id)" title="click to remove this filter">
+              <span class="label label-default">
+                <span data-bind="text: name"></span>:
+                <span data-bind="text: value($data.on)"></span>
+              </span>
+              <span class="label label-danger filter-remove">&times;</span>
+            </li>
+          </ul>
+          <table class="table table-striped table-bordered table-condensed table-responsive">
+            <thead>
+              <tr data-bind="with: transaction">
+                <td data-bind="click: sort('accountName'), visible: !$root.account.selectedAccount()">
+                  Account
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'accountName', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i>
+                </td>  
+                <td data-bind="click: sort('date')" class="transaction-date">
+                  Date
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'date', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i> 
+                </td>  
+                <td data-bind="click: sort('payeeName')">
+                  Payee
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'payeeName', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i>  
+                </td>  
+                <td data-bind="click: sort('categoryName')">
+                  Category
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'categoryName', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i>
+                </td>  
+                <td data-bind="click: sort('memo')">
+                  Memo
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'memo', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i>
+                </td>  
+                <td data-bind="click: sort('amount')" class="transaction-amount">
+                  Amount
+                  <i class="glyphicon pull-right" data-bind="visible: sortBy() === 'amount', css: desc() ? 'glyphicon-sort-by-attributes-alt': 'glyphicon-sort-by-attributes'"></i>
+                </td>  
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: transaction.filteredTransactions">
+              <tr data-bind="click: function(){ console.log($data); }">
+                <td data-bind="visible: !$root.account.selectedAccount()">
+                  <a href="#" data-bind="text: accountName, click: $root.transaction.addFilter('account', $data)"></a>
+                </td>
+                <td>
+                  <a href="#" data-bind="text: date, click: $root.transaction.addFilter('date', $data)"></a>
+                </td>
+                <td>
+                  <a href="#" data-bind="text: payeeName, click: $root.transaction.addFilter('payee', $data)"></a>
+                </td>
+                <td>
+                  <a href="#" data-bind="text: categoryName, click: $root.transaction.addFilter('category', $data), visible: !subTransactions.length"></a>
+                  <ul data-bind="visible: subTransactions.length, foreach: subTransactions" class="list-unstyled">
+                    <li>
+                      <a href="#" data-bind="text: categoryName, click: $root.transaction.addFilter('category', $data)"></a>
+                    </li>
+                  </ul>
+                </td>
+                <td data-bind="text: memo"></td>
+                <td data-bind="text: numeral(amount).format('0.00')" class="text-right"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+    <script type="text/html" id="account-list-template">
+      <div class="panel panel-default">
+        <div class="panel-heading toggle-account-list" data-bind="click: toggle">
+          <span data-bind="text: title"></span>
+          <i class="glyphicon pull-right" data-bind="css: show() ? 'glyphicon-chevron-down': 'glyphicon-chevron-left'"></i>
+        </div>
+        <div class="panel-body" data-bind="visible: show">
+          <ul class="nav nav-pills nav-stacked" data-bind="foreach: accounts">
+            <li data-bind="click: $root.account.select, css: { active: $root.account.selectedAccount() === $data }">
+              <a href="#">
+                <span class="badge pull-right" data-bind="text: numeral($root.accountBalance($data.entityId)).format('0.00'), css: $root.accountBalance($data.entityId) < 0 ? 'alert-danger' : 'alert-success'"></span>
+                <span data-bind="text: accountName"></span>
+              </a> 
+            </li>
+          </ul>
+        </div>
+      </div>
+    </script>
+    <script src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.0.0/knockout-debug.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/1.5.3/numeral.min.js"></script>
+    <script src="client.js"></script>
+    <script src="app.js"></script>
+    <script>
+    var app;
+    if(securedPage) {
+      app = new App({ key: "qrrtbcmepbyplpp"});
+      ko.applyBindings(app);      
+    }
+    </script>
   </body>
 </html>
