@@ -7,7 +7,7 @@ body {
 	padding: 5px;
 }
 
-.panel {
+.panel, .list-group {
     margin-bottom: 10px;
 }
 .panel-heading {
@@ -26,12 +26,31 @@ body {
 }
 
 .filters .label {
-    font-size: 80%;
+    font-size: 85%;
     border-radius: 0;
+}
+
+.filter .label {
+    cursor: pointer;
+}
+
+.filter .label:first-child {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+.filter .label:last-child {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
 }
 
 .filter-remove {
     margin-left: 0px;
+}
+
+.sign-out {
+    width: 100%;
+    margin-bottom: 10px;
 }
 
 .toggle-account-list, .transactions table thead td {

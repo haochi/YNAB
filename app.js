@@ -31,6 +31,12 @@ function App(settings){
     return accountBalance()[accountId] || 0;
   }
 
+  self.signOut = function() {
+    client.dropbox.signOut({}, function(){
+      location.href = "/signout.html"
+    })
+  }
+
   client.authenticate().then(function(){
     client.loadJson(rootFile).then(function(root){
       self.budget.budgets(root.relativeKnownBudgets);
@@ -41,14 +47,6 @@ function App(settings){
       self.errorMessage("Unable to load YNAB settings file (" + rootFile + "). Make sure you connect to a Dropbox account with that YNAB syncs with.");
     });
   });
-
-  client.dropbox.onError.addListener(function(error) {
-      console.error(error);
-  });
-
-  function path(){
-    return Array.prototype.slice.call(arguments, 0).join("/")
-  }
 }
 
 function AccountList(settings) {
@@ -135,11 +133,6 @@ function CategoryController(settings) {
   self.lookup = function(id) {
     return lookup()[id] || specialLookup[id] || {};
   }
-}
-
-function MonthlyBudget(settings){
-  var self = this;
-  self.monthlyBudgets = ko.observableArray();
 }
 
 function TransactionController(settings){
