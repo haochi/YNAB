@@ -163,7 +163,10 @@ function TransactionController(settings){
     "category": new Filter("Category", "category", function(t) {
       return t.categoryName;
     }, function(t, on) {
-      return t.categoryId === on.categoryId;
+      var onCategoryId = on.categoryId;
+      return t.categoryId === onCategoryId || t.subTransactions.some(function(subTransaction) {
+        return subTransaction.categoryId === onCategoryId;
+      });
     })
   }
 
